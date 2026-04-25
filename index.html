@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>直播排行榜 - 鼠鼠赏金赛</title>
+<title>直播排行榜 - 鼠鼠赏金赛（单三猛攻绝航）本周六</title>
 <style>
 * {
   margin: 0;
@@ -137,13 +137,13 @@ body {
 <body>
 <!-- 直播画面 -->
 <div class="box">
-  <h1 class="title">👑 鼠鼠赏金赛实时排行榜</h1>
+  <h1 class="title">👑 鼠鼠赏金赛（单三猛攻绝航）本周六实时排行榜</h1>
   <div id="result"></div>
 </div>
 
 <!-- 后台控制面板（默认显示） -->
 <div id="controlPanel">
-  <h3>后台控制面板</h3>
+  <h3>后台控制面板（38人）</h3>
   <div id="players" class="player-list"></div>
   <div class="btns">
     <button class="btn" onclick="reset()">清空重置</button>
@@ -152,13 +152,15 @@ body {
 </div>
 
 <script>
+// 从Excel文件提取的最新38人抖音ID名单
 const users = [
 "瀚爱吃冰淇琳","牢","SUN","肸乯","波鲁鲁","今天中午吃啥呢",
 "小刘大王","东","吃点小鱼干","赖皮婵","Yee","望如日出",
 "妄想","愿望早点睡","我想意气风发","长期喝假酒6657","困男",
 "喝茶吗","552758","喝可乐","现实是头猪","小猫星期五",
-"癞蛤蟆想吃天鹅肉","你爷爷睡觉呢","Capricorn666","🌈🌈🌈Y.",
-"12un","五号球","徐绝对不虚"
+"癞蛤蟆想吃天鹅肉","你爷爷睡觉呢","永世","Capricorn666",
+"🌈🌈🌈Y.","12un","五号球","徐绝对不虚","December","琳墨",
+"😫","寄18弟","Edwad","aaa","小玲","林痕"
 ];
 
 // 初始化后台面板
@@ -214,7 +216,7 @@ function exportExcel() {
   const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "鼠鼠赏金赛排行榜.csv";
+  a.download = "鼠鼠赏金赛（单三猛攻绝航）本周六排行榜.csv";
   a.click();
 }
 
