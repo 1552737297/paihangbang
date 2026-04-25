@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>直播排行榜 - 鼠鼠赏金赛</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Microsoft YaHei", sans-serif;
+}
+
+body {
+  background: #000000;
+  color: #ffffff;
+  padding: 20px;
+}
+
+.box {
+  max-width: 800px;
+  margin: 0 auto;
+  background: transparent;
+  padding: 20px;
+}
+
+.title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+  color: #00eeff;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px #00eeff;
+}
+
+.rank-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.rank-table th, .rank-table td {
+  padding: 16px;
+  text-align: center;
+  font-size: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rank-table th {
+  background: rgba(0, 60, 80, 0.8);
+  color: #00eeff;
+  font-size: 20px;
+  text-shadow: 0 0 8px #00eeff;
+}
+
+.rank-table td:nth-child(1) {
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.rank-table tr:nth-child(1) td {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  text-shadow: 0 0 10px #ffd700;
+}
+.rank-table tr:nth-child(2) td {
+  background: rgba(192, 192, 192, 0.2);
+  color: #c0c0c0;
+}
+.rank-table tr:nth-child(3) td {
+  background: rgba(205, 127, 50, 0.2);
+  color: #cd7f32;
+}
+
+#controlPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  height: 100vh;
+  background: #111;
+  padding: 20px;
+  border-left: 2px solid #00eeff;
+  overflow-y: auto;
+  display: none;
+  z-index: 999;
+}
+
+.player {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #333;
+}
+
+.score {
+  width: 80px;
+  padding: 6px;
+  background: #222;
+  border: 1px solid #00eeff;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+}
+
+.btns {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 16px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  opacity: 0.8;
+}
+
+.showCtrl #controlPanel {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+<div class="box">
+  <h1 class="title">👑 鼠鼠赏金赛实时排行榜</h1>
+  <div id="result"></div>
+</div>
+
+<div id="controlPanel">
+  <h3>后台控制面板</h3>
+  <div id="players" class="player-list"></div>
+  <div class="btns">
+    <button class="btn" onclick="reset()">清空重置</button>
+    <button class="btn" onclick="exportExcel()">导出Excel</button>
+  </div>
+</div>
+
+<script>
+const users = [
+"瀚爱吃冰淇琳","牢","SUN","肸乯","波鲁鲁","今天中午吃啥呢",
+"小刘大王","东","吃点小鱼干","赖皮婵","Yee","望如日出",
+"妄想","愿望早点睡","我想意气风发","长期喝假酒6657","困男",
+"喝茶吗","552758","喝可乐","现实是头猪","小猫星期五",
+"癞蛤蟆想吃天鹅肉","你爷爷睡觉呢","Capricorn666","🌈🌈🌈Y.",
+"12un","五号球","徐绝对不虚"
+];
+
+function init() {
+  const wrap = document.getElementById("players");
+  users.forEach((u, i) => {
+    const item = document.createElement("div");
+    item.className = "player";
+    item.innerHTML = `<div>${u}</div><input type="number" class="score" id="s${i}" placeholder="分数" oninput="autoRank()">`;
+    wrap.appendChild(item);
+  });
+  autoRank();
+}
+
+function autoRank() {
+  const arr = [];
+  users.forEach((u, i) => {
+    const v = document.getElementById(`s${i}`)?.value || "0";
+    const num = parseInt(v) || 0;
+    arr.push({ name: u, score: num });
+  });
+  arr.sort((a, b) => b.score - a.score);
+
+  let html = `<table class="rank-table"><tr><th>排名</th><th>抖音ID</th><th>积分</th></tr>`;
+  arr.forEach((it, i) => {
+    let rank = i + 1;
+    if (i === 0) rank = "👑 1";
+    html += `<tr><td>${rank}</td><td>${it.name}</td><td>${it.score}</td></tr>`;
+  });
+  html += `</table>`;
+  document.getElementById("result").innerHTML = html;
+}
+
+function reset() {
+  document.querySelectorAll(".score").forEach(i => i.value = "");
+  autoRank();
+}
+
+function exportExcel() {
+  const arr = [];
+  users.forEach((u, i) => {
+    const v = document.getElementById(`s${i}`)?.value || "0";
+    arr.push({ name: u, score: parseInt(v) || 0 });
+  });
+  arr.sort((a, b) => b.score - a.score);
+  let csv = "排名,抖音ID,分数\n";
+  arr.forEach((it, i) => {
+    csv += `${i + 1},"${it.name}",${it.score}\n`;
+  });
+  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "鼠鼠赏金赛排行榜.csv";
+  a.click();
+}
+
+// 已改为：Ctrl + T 显示/隐藏后台
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.key === "t") {
+    document.body.classList.toggle("showCtrl");
+  }
+});
+
+window.onload = init;
+</script>
+</body>
+</html>
