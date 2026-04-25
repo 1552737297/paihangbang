@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>✨ 自定义排行榜工坊 | 自由编辑你的榜单</title>
+    <title>实时排名 · 自定义排行榜工坊</title>
     <style>
         * {
             margin: 0;
@@ -18,20 +18,19 @@
             padding: 2rem 1.5rem;
         }
 
-        /* 主容器 */
         .dashboard {
             max-width: 1400px;
             margin: 0 auto;
         }
 
-        /* 卡片通用样式 */
+        /* 卡片样式 */
         .card {
             background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(2px);
             border-radius: 2rem;
             box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.02);
-            transition: all 0.2s ease;
             border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.2s;
         }
 
         /* 头部设置区 */
@@ -87,6 +86,7 @@
             display: flex;
             gap: 0.8rem;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .btn-outline {
@@ -140,7 +140,7 @@
             color: #991b1b;
         }
 
-        /* 表单卡片 (添加/编辑) */
+        /* 表单卡片 */
         .form-card {
             padding: 1.2rem 2rem 1.5rem;
             margin-bottom: 2rem;
@@ -206,7 +206,7 @@
             color: #1e40af;
         }
 
-        /* 排行榜主体 */
+        /* 排行榜核心区 */
         .rank-card {
             padding: 0rem 0rem 1rem 0rem;
             overflow-x: auto;
@@ -262,7 +262,7 @@
             font-weight: 800;
             font-size: 1.2rem;
             color: #4b6a8b;
-            width: 60px;
+            width: 65px;
         }
 
         .item-name {
@@ -273,21 +273,24 @@
         .item-score {
             font-weight: 700;
             font-family: monospace;
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             color: #0f3b5c;
+            min-width: 90px;
         }
 
         .action-buttons {
             display: flex;
-            gap: 8px;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
         .icon-btn {
             background: none;
             border: none;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 5px 8px;
             border-radius: 2rem;
             transition: all 0.15s;
             opacity: 0.7;
@@ -296,7 +299,25 @@
         .icon-btn:hover {
             opacity: 1;
             background: #eef3fa;
-            transform: scale(1.05);
+            transform: scale(1.03);
+        }
+
+        .step-btn {
+            background: #f0f4f9;
+            border: 1px solid #cddae5;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.25rem 0.8rem;
+            cursor: pointer;
+            transition: 0.1s;
+            color: #2c6280;
+        }
+
+        .step-btn:hover {
+            background: #e4ecf5;
+            border-color: #8aaec5;
+            transform: scale(0.97);
         }
 
         .empty-row td {
@@ -306,7 +327,6 @@
             font-style: italic;
         }
 
-        /* 响应式 */
         @media (max-width: 780px) {
             body {
                 padding: 1rem;
@@ -326,7 +346,14 @@
                 padding: 0.8rem 0.5rem;
             }
             .rank-number {
-                width: 40px;
+                width: 45px;
+            }
+            .action-buttons {
+                gap: 4px;
+            }
+            .step-btn {
+                padding: 0.2rem 0.6rem;
+                font-size: 0.75rem;
             }
         }
     </style>
@@ -338,7 +365,7 @@
         <div class="config-group">
             <div class="config-item">
                 <label>🏆 榜单标题</label>
-                <input type="text" id="rankTitleInput" placeholder="例如：巅峰荣耀榜" value="✨ 自定义排行榜">
+                <input type="text" id="rankTitleInput" placeholder="自定义标题" value="✨ 实时激斗排行榜">
             </div>
             <div class="config-item">
                 <label>📛 名称列名</label>
@@ -346,11 +373,11 @@
             </div>
             <div class="config-item">
                 <label>⭐ 数值列名</label>
-                <input type="text" id="colScoreInput" placeholder="分数 / 成就值" value="荣耀积分">
+                <input type="text" id="colScoreInput" placeholder="分数 / 成就值" value="战力指数">
             </div>
         </div>
         <div class="sort-actions">
-            <button id="toggleSortBtn" class="btn-outline" style="background:#f0f4f9;">🔽 降序排列</button>
+            <button id="toggleSortBtn" class="btn-outline">🔽 降序 (高分在前)</button>
             <button id="resetExampleBtn" class="btn-outline">📋 重置示例</button>
             <button id="clearAllBtn" class="btn-outline btn-danger">🗑️ 清空榜单</button>
         </div>
@@ -364,25 +391,27 @@
         </div>
         <div class="inline-form">
             <div class="field">
-                <label id="nameFieldLabel">名称</label>
-                <input type="text" id="itemNameInput" placeholder="例如：干员K / 队伍alpha" autocomplete="off">
+                <label id="nameFieldLabel">挑战者</label>
+                <input type="text" id="itemNameInput" placeholder="例如：炎龙骑士" autocomplete="off">
             </div>
             <div class="field">
-                <label id="scoreFieldLabel">数值</label>
-                <input type="number" id="itemScoreInput" placeholder="分数 / 数值" step="any" value="100">
+                <label id="scoreFieldLabel">战力指数</label>
+                <input type="number" id="itemScoreInput" placeholder="分数 / 数值" step="1" value="100">
             </div>
             <div class="form-buttons">
                 <button id="saveItemBtn" class="btn-primary">➕ 添加 / 更新</button>
                 <button id="cancelEditBtn" class="btn-outline" style="display: none;">取消编辑</button>
             </div>
         </div>
-        <div style="font-size: 0.7rem; margin-top: 12px; color: #6e889b;">💡 提示：可随时添加/修改，自动根据数值排序。编辑时点击条目旁的✏️即可。</div>
+        <div style="font-size: 0.7rem; margin-top: 12px; color: #6e889b;">
+            💡 实时联动 · 点击每行旁的 <strong style="background:#eef2fa; padding:2px 8px; border-radius:20px;">+1 / -1</strong> 按钮，分值变化瞬间重新排名！总分平均值即时刷新。
+        </div>
     </div>
 
     <!-- 排行榜展示区 -->
     <div class="card rank-card">
         <div class="rank-header">
-            <h2 id="dynamicRankTitle" style="font-weight: 700; letter-spacing: -0.3px;">✨ 自定义排行榜</h2>
+            <h2 id="dynamicRankTitle" style="font-weight: 700; letter-spacing: -0.3px;">✨ 实时激斗排行榜</h2>
             <div class="stats" id="statsPanel">
                 <span>📊 条目: <span id="totalCount">0</span></span>
                 <span>🏅 总分: <span id="totalScore">0</span></span>
@@ -395,8 +424,8 @@
                     <tr>
                         <th># 排名</th>
                         <th id="nameColHeader">挑战者</th>
-                        <th id="scoreColHeader">荣耀积分</th>
-                        <th style="width: 100px;">操作</th>
+                        <th id="scoreColHeader">战力指数</th>
+                        <th style="min-width: 160px;">实时操控 · 微调排名</th>
                     </tr>
                 </thead>
                 <tbody id="rankTableBody">
@@ -409,25 +438,22 @@
 
 <script>
     // ---------- 核心数据 ----------
-    let rankingItems = [];        // 存储对象 { id, name, score }
-    let editId = null;            // 当前编辑的id
-    let sortDirection = 'desc';   // 'desc' 高分在上 , 'asc' 低分在上
+    let rankingItems = [];        // { id, name, score }
+    let editId = null;            // 编辑中的id
+    let sortDirection = 'desc';   // 'desc' 高分优先
 
     // ---------- DOM 元素 ----------
-    // 设置域
     const rankTitleInput = document.getElementById('rankTitleInput');
     const colNameInput = document.getElementById('colNameInput');
     const colScoreInput = document.getElementById('colScoreInput');
     const toggleSortBtn = document.getElementById('toggleSortBtn');
     const resetExampleBtn = document.getElementById('resetExampleBtn');
     const clearAllBtn = document.getElementById('clearAllBtn');
-    // 表单域
     const itemNameInput = document.getElementById('itemNameInput');
     const itemScoreInput = document.getElementById('itemScoreInput');
     const saveItemBtn = document.getElementById('saveItemBtn');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
     const editModeBadge = document.getElementById('editModeBadge');
-    // 展示域
     const dynamicRankTitle = document.getElementById('dynamicRankTitle');
     const nameColHeader = document.getElementById('nameColHeader');
     const scoreColHeader = document.getElementById('scoreColHeader');
@@ -435,7 +461,6 @@
     const totalCountSpan = document.getElementById('totalCount');
     const totalScoreSpan = document.getElementById('totalScore');
     const avgScoreSpan = document.getElementById('avgScore');
-    // 字段标签 (可选样式)
     const nameFieldLabel = document.getElementById('nameFieldLabel');
     const scoreFieldLabel = document.getElementById('scoreFieldLabel');
 
@@ -444,7 +469,7 @@
     const STORAGE_SETTINGS = 'custom_rank_settings';
     const STORAGE_SORT = 'custom_rank_sortDir';
 
-    // ---------- 辅助函数 ----------
+    // 保存数据到localStorage
     function saveItemsToLocal() {
         localStorage.setItem(STORAGE_ITEMS, JSON.stringify(rankingItems));
     }
@@ -454,7 +479,6 @@
         if (stored) {
             try {
                 rankingItems = JSON.parse(stored);
-                // 确保每个对象都有id和老数据兼容（之前未加id? 防御）
                 if (!rankingItems.every(item => item.hasOwnProperty('id'))) {
                     rankingItems = rankingItems.map(item => ({ ...item, id: item.id || Date.now() + Math.random() + '' }));
                     saveItemsToLocal();
@@ -462,12 +486,13 @@
             } catch(e) { rankingItems = []; }
         }
         if (!rankingItems.length) {
-            // 默认示例数据
+            // 默认趣味样例
             rankingItems = [
-                { id: 'init1', name: '暗影刺客 · 零', score: 986 },
-                { id: 'init2', name: '霜月剑姬', score: 1240 },
-                { id: 'init3', name: '星尘咏者', score: 752 },
-                { id: 'init4', name: '机械先驱', score: 1103 },
+                { id: 'init1', name: '赤红 · 暴风使', score: 1240 },
+                { id: 'init2', name: '霜月 · 灵歌', score: 982 },
+                { id: 'init3', name: '雷霆主宰', score: 1453 },
+                { id: 'init4', name: '暗影星尘', score: 771 },
+                { id: 'init5', name: '翠羽守护者', score: 1105 },
             ];
             saveItemsToLocal();
         }
@@ -492,7 +517,6 @@
                 if (settings.colScore) colScoreInput.value = settings.colScore;
             } catch(e) {}
         }
-        // 加载排序方向
         const savedSort = localStorage.getItem(STORAGE_SORT);
         if (savedSort === 'asc' || savedSort === 'desc') {
             sortDirection = savedSort;
@@ -504,9 +528,9 @@
 
     function updateSortButtonText() {
         if (sortDirection === 'desc') {
-            toggleSortBtn.innerHTML = '🔽 降序排列 (高分在前)';
+            toggleSortBtn.innerHTML = '🔽 降序 (高分在前)';
         } else {
-            toggleSortBtn.innerHTML = '🔼 升序排列 (低分在前)';
+            toggleSortBtn.innerHTML = '🔼 升序 (低分在前)';
         }
     }
 
@@ -515,28 +539,29 @@
         updateSortButtonText();
     }
 
-    // ---------- 渲染排行榜 (核心) ----------
+    // 重新排序获取渲染用数组 (不改变原数组顺序, 返回新排好的列表)
+    function getSortedItems() {
+        return [...rankingItems].sort((a, b) => {
+            if (sortDirection === 'desc') return b.score - a.score;
+            else return a.score - b.score;
+        });
+    }
+
+    // 渲染排行榜 + 绑定实时微调按钮 (核心: 点击 +/- 实时更新分数+排名)
     function renderRanking() {
-        // 1. 获取自定义列名
+        // 自定义列名
         const customName = colNameInput.value.trim() || "名称";
         const customScore = colScoreInput.value.trim() || "分数";
         nameColHeader.innerText = customName;
         scoreColHeader.innerText = customScore;
-        // 动态改变表单标签（增强一致性）
         nameFieldLabel.innerText = customName;
         scoreFieldLabel.innerText = customScore;
 
-        // 2. 标题更新
+        // 标题同步
         const titleRaw = rankTitleInput.value.trim();
         dynamicRankTitle.innerText = titleRaw || "自定义排行榜";
 
-        // 3. 数据排序 (根据sortDirection)
-        const sorted = [...rankingItems].sort((a, b) => {
-            if (sortDirection === 'desc') return b.score - a.score;
-            else return a.score - b.score;
-        });
-
-        // 4. 统计信息
+        // 统计数据
         const total = rankingItems.length;
         const totalScore = rankingItems.reduce((sum, cur) => sum + (typeof cur.score === 'number' ? cur.score : 0), 0);
         const avg = total === 0 ? 0 : (totalScore / total).toFixed(1);
@@ -544,33 +569,50 @@
         totalScoreSpan.innerText = totalScore.toLocaleString();
         avgScoreSpan.innerText = avg;
 
-        // 5. 渲染表格body
         if (total === 0) {
             rankTableBody.innerHTML = `<tr class="empty-row"><td colspan="4">🏷️ 暂无数据，点击上方添加你的第一个项目吧</td></tr>`;
             return;
         }
 
+        const sorted = getSortedItems();
         let html = '';
         sorted.forEach((item, idx) => {
             const rank = idx + 1;
-            // 处理名称、分数显示
             const displayName = escapeHtml(item.name) || '未命名';
             const displayScore = typeof item.score === 'number' ? item.score.toLocaleString() : item.score;
+            // 注意: 每个项目都带有微调按钮 +1 / -1 ，实现实时排名变化
             html += `
                 <tr data-id="${item.id}">
                     <td class="rank-number">${rank}</td>
                     <td class="item-name">${displayName}</td>
                     <td class="item-score">⭐ ${displayScore}</td>
                     <td class="action-buttons">
-                        <button class="icon-btn edit-item" data-id="${item.id}" title="编辑">✏️</button>
-                        <button class="icon-btn delete-item" data-id="${item.id}" title="删除">🗑️</button>
+                        <button class="step-btn step-down" data-id="${item.id}" data-step="-1" title="减少1分，实时重排"> -1 </button>
+                        <button class="step-btn step-up" data-id="${item.id}" data-step="1" title="增加1分，实时重排"> +1 </button>
+                        <button class="icon-btn edit-item" data-id="${item.id}" title="编辑名称/数值">✏️</button>
+                        <button class="icon-btn delete-item" data-id="${item.id}" title="删除条目">🗑️</button>
                     </td>
                 </tr>
             `;
         });
         rankTableBody.innerHTML = html;
 
-        // 绑定动态按钮事件 (编辑/删除)
+        // 绑定所有微调按钮 +1 / -1 事件 (实时改变分数并触发重绘排名)
+        document.querySelectorAll('.step-up').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute('data-id');
+                modifyScoreById(id, 1);
+            });
+        });
+        document.querySelectorAll('.step-down').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute('data-id');
+                modifyScoreById(id, -1);
+            });
+        });
+        // 编辑/删除事件
         document.querySelectorAll('.edit-item').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = btn.getAttribute('data-id');
@@ -585,26 +627,32 @@
         });
     }
 
-    // 简单的防XSS
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-            return c;
-        });
+    // 实时修改分数 : delta 变化量 (+1 / -1)
+    function modifyScoreById(id, delta) {
+        const item = rankingItems.find(i => i.id === id);
+        if (!item) return;
+        let newScore = item.score + delta;
+        // 允许负分场景（但不限制下限，不过为了美观，允许负分显示没有问题）
+        // 保留一位小数或者整数，但步进为整数，保持整数即可
+        newScore = Math.round(newScore * 10) / 10;
+        item.score = newScore;
+        // 保存到localStorage
+        saveItemsToLocal();
+        // 重新渲染表格（实时排名更新）
+        renderRanking();
+        // 如果当前正在编辑的项目刚好是这个id且编辑模式未关闭，需要同步表单数值（可选）
+        if (editId === id) {
+            itemScoreInput.value = item.score;
+        }
     }
 
-    // ---------- 数据操作 CRUD ----------
+    // 通过表单增、改项目
     function addOrUpdateItem() {
         let name = itemNameInput.value.trim();
         let scoreRaw = itemScoreInput.value.trim();
-
+        const nameLabel = colNameInput.value.trim() || "名称";
         if (name === "") {
-            alert(`❌ 请填写${colNameInput.value.trim() || "名称"}`);
+            alert(`❌ 请填写${nameLabel}`);
             return;
         }
         let scoreNum = parseFloat(scoreRaw);
@@ -612,20 +660,16 @@
             alert(`❌ 数值必须是有效数字，当前输入: ${scoreRaw}`);
             return;
         }
-        // 允许负数? 排行榜一般允许正负但随意，保留灵活性
-        scoreNum = Math.round(scoreNum * 10) / 10; // 保留一位小数清爽
+        scoreNum = Math.round(scoreNum * 10) / 10;
 
         if (editId !== null) {
-            // 更新模式
             const index = rankingItems.findIndex(item => item.id === editId);
             if (index !== -1) {
                 rankingItems[index].name = name;
                 rankingItems[index].score = scoreNum;
             }
-            // 退出编辑模式
             resetEditMode();
         } else {
-            // 新增模式
             const newId = Date.now() + '-' + Math.random().toString(36).substr(2, 6);
             rankingItems.push({
                 id: newId,
@@ -633,10 +677,9 @@
                 score: scoreNum,
             });
         }
-        // 保存 & 渲染
         saveItemsToLocal();
         renderRanking();
-        clearForm();
+        clearFormInputs();   // 清空输入框 (仅新增后清空，编辑后已resetEditMode)
     }
 
     function startEditById(id) {
@@ -648,7 +691,6 @@
         saveItemBtn.innerText = '✏️ 更新项目';
         cancelEditBtn.style.display = 'inline-flex';
         editModeBadge.style.display = 'inline-block';
-        // 滚动到表单
         document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
@@ -657,40 +699,40 @@
         saveItemBtn.innerText = '➕ 添加 / 更新';
         cancelEditBtn.style.display = 'none';
         editModeBadge.style.display = 'none';
-        clearForm();
+        clearFormInputs();
     }
 
-    function clearForm() {
+    function clearFormInputs() {
         if (editId === null) {
             itemNameInput.value = '';
             itemScoreInput.value = '100';
         } else {
-            // 在重置编辑模式后再清空，但不用重复清太狠
+            // 重置编辑模式后干净一点
+            itemNameInput.value = '';
+            itemScoreInput.value = '100';
         }
     }
 
     function deleteItemById(id) {
         const item = rankingItems.find(i => i.id === id);
         if (!item) return;
-        const confirmMsg = `确定要删除「${item.name}」吗？`;
-        if (confirm(confirmMsg)) {
+        if (confirm(`永久删除「${item.name}」，榜单实时刷新。确认吗？`)) {
             rankingItems = rankingItems.filter(item => item.id !== id);
-            if (editId === id) {
-                resetEditMode();
-            }
+            if (editId === id) resetEditMode();
             saveItemsToLocal();
             renderRanking();
         }
     }
 
     function resetToExample() {
-        if (confirm("重置示例数据会覆盖当前所有自定义内容，确定吗？")) {
+        if (confirm("重置示例将覆盖当前所有数据，但会保留你的标题/列名设定，继续吗？")) {
             rankingItems = [
-                { id: 'ex1', name: '绯红魔导师', score: 1472 },
-                { id: 'ex2', name: '霜巨人守护者', score: 823 },
-                { id: 'ex3', name: '灵风斥候', score: 2005 },
-                { id: 'ex4', name: '钢铁壁垒', score: 655 },
-                { id: 'ex5', name: '月影舞者', score: 1198 },
+                { id: 'ex_a', name: '绯红魔导师', score: 1472 },
+                { id: 'ex_b', name: '霜巨人守护者', score: 823 },
+                { id: 'ex_c', name: '灵风斥候', score: 2005 },
+                { id: 'ex_d', name: '钢铁壁垒', score: 655 },
+                { id: 'ex_e', name: '月影舞者', score: 1198 },
+                { id: 'ex_f', name: '神谕贤者', score: 1777 },
             ];
             if (editId) resetEditMode();
             saveItemsToLocal();
@@ -699,7 +741,7 @@
     }
 
     function clearAllItems() {
-        if (confirm("⚠️ 清空所有榜单项目，不可撤销。确定吗？")) {
+        if (confirm("⚠️ 彻底清空所有榜单项目，不可撤销。确定吗？")) {
             rankingItems = [];
             if (editId) resetEditMode();
             saveItemsToLocal();
@@ -707,42 +749,46 @@
         }
     }
 
-    // 切换排序方向
     function toggleSortDirection() {
         sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
         saveSortDirection();
-        renderRanking();   // 重新排序渲染
+        renderRanking();  // 重新排序渲染
     }
 
-    // 监听设置变化，实时刷新界面（标题，列名）
     function bindSettingsWatchers() {
         const updateFromSettings = () => {
             saveSettingsToLocal();
-            renderRanking();  // 列名/标题改变立马重绘
+            renderRanking();
         };
         rankTitleInput.addEventListener('input', updateFromSettings);
         colNameInput.addEventListener('input', updateFromSettings);
         colScoreInput.addEventListener('input', updateFromSettings);
     }
 
-    // 全局监听取消编辑
     function bindFormActions() {
         saveItemBtn.addEventListener('click', addOrUpdateItem);
         cancelEditBtn.addEventListener('click', () => {
             resetEditMode();
-            renderRanking(); // 重置后刷新（避免残留高亮）
+            renderRanking();
         });
-        // 清空输入框的小优化: 但不要干扰编辑，直接提供一个复位感觉不太需要，用户手动清除就好
     }
 
-    // 监听重置、清空、排序按钮
     function bindUtilityButtons() {
         resetExampleBtn.addEventListener('click', resetToExample);
         clearAllBtn.addEventListener('click', clearAllItems);
         toggleSortBtn.addEventListener('click', toggleSortDirection);
     }
 
-    // 初始化加载数据与渲染
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
     function init() {
         loadItemsFromLocal();
         loadSettingsFromLocal();
@@ -750,14 +796,12 @@
         bindFormActions();
         bindUtilityButtons();
         renderRanking();
-        // 如果表单处于非编辑状态，输入框保持默认清爽
         if (!editId) {
             itemNameInput.value = '';
             itemScoreInput.value = '100';
         }
     }
 
-    // 启动一切
     init();
 </script>
 </body>
