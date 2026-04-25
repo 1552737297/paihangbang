@@ -80,7 +80,7 @@ body {
   color: #cd7f32;
 }
 
-/* ========== 控制面板（观众不可见） ========== */
+/* ========== 控制面板（默认显示） ========== */
 #controlPanel {
   position: fixed;
   top: 0;
@@ -91,7 +91,7 @@ body {
   padding: 20px;
   border-left: 2px solid #00eeff;
   overflow-y: auto;
-  display: none;
+  display: block;
   z-index: 999;
 }
 
@@ -131,11 +131,6 @@ body {
 .btn:hover {
   opacity: 0.8;
 }
-
-/* 显示/隐藏控制面板 */
-.showCtrl #controlPanel {
-  display: block;
-}
 </style>
 </head>
 
@@ -146,7 +141,7 @@ body {
   <div id="result"></div>
 </div>
 
-<!-- 后台控制面板（默认隐藏） -->
+<!-- 后台控制面板（默认显示） -->
 <div id="controlPanel">
   <h3>后台控制面板</h3>
   <div id="players" class="player-list"></div>
@@ -222,13 +217,6 @@ function exportExcel() {
   a.download = "鼠鼠赏金赛排行榜.csv";
   a.click();
 }
-
-// 快捷键：Ctrl + ` 显示/隐藏后台面板
-document.addEventListener("keydown", (e) => {
-  if (e.ctrlKey && e.key === "`") {
-    document.body.classList.toggle("showCtrl");
-  }
-});
 
 window.onload = init;
 </script>
