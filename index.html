@@ -148,13 +148,15 @@ body {
 </div>
 
 <script>
+// 已更新：全部35名选手
 const users = [
 "瀚爱吃冰淇琳","牢","SUN","肸乯","波鲁鲁","今天中午吃啥呢",
 "小刘大王","东","吃点小鱼干","赖皮婵","Yee","望如日出",
 "妄想","愿望早点睡","我想意气风发","长期喝假酒6657","困男",
 "喝茶吗","552758","喝可乐","现实是头猪","小猫星期五",
-"癞蛤蟆想吃天鹅肉","你爷爷睡觉呢","Capricorn666","🌈🌈🌈Y.",
-"12un","五号球","徐绝对不虚"
+"癞蛤蟆想吃天鹅肉","你爷爷睡觉呢","永世","Capricorn666",
+"🌈🌈🌈Y.","12un","五号球","徐绝对不虚","December",
+"琳墨","😫","寄18弟","Edwad"
 ];
 
 function init() {
@@ -210,7 +212,7 @@ function exportExcel() {
   a.click();
 }
 
-// 已改为：Ctrl + T 显示/隐藏后台
+// 快捷键 Ctrl+T 呼出/隐藏后台
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && e.key === "t") {
     document.body.classList.toggle("showCtrl");
