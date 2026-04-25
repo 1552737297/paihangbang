@@ -1,808 +1,236 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>实时排名 · 自定义排行榜工坊</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>直播排行榜 - 鼠鼠赏金赛</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Microsoft YaHei", sans-serif;
+}
 
-        body {
-            background: linear-gradient(145deg, #f4f7fc 0%, #e9eef4 100%);
-            min-height: 100vh;
-            padding: 2rem 1.5rem;
-        }
+/* 直播专用：纯黑背景，方便透明抠图 */
+body {
+  background: #000000;
+  color: #ffffff;
+  padding: 20px;
+}
 
-        .dashboard {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+/* 直播显示容器：干净无框 */
+.box {
+  max-width: 800px;
+  margin: 0 auto;
+  background: transparent;
+  padding: 20px;
+}
 
-        /* 卡片样式 */
-        .card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(2px);
-            border-radius: 2rem;
-            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.2s;
-        }
+.title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+  color: #00eeff;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px #00eeff;
+}
 
-        /* 头部设置区 */
-        .settings-panel {
-            padding: 1.5rem 2rem;
-            margin-bottom: 2rem;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: flex-end;
-            gap: 1.2rem;
-            justify-content: space-between;
-        }
+/* 排行榜表格 - 直播画面只显示这个 */
+.rank-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 12px;
+  overflow: hidden;
+}
 
-        .config-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.2rem;
-            flex: 2;
-        }
+.rank-table th, .rank-table td {
+  padding: 16px;
+  text-align: center;
+  font-size: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-        .config-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-            min-width: 140px;
-        }
+.rank-table th {
+  background: rgba(0, 60, 80, 0.8);
+  color: #00eeff;
+  font-size: 20px;
+  text-shadow: 0 0 8px #00eeff;
+}
 
-        .config-item label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #4a5b6e;
-        }
+/* 排名数字超大醒目 */
+.rank-table td:nth-child(1) {
+  font-size: 26px;
+  font-weight: bold;
+}
 
-        .config-item input {
-            background: #ffffff;
-            border: 1px solid #cfdee9;
-            padding: 0.6rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.9rem;
-            transition: 0.2s;
-            outline: none;
-            font-weight: 500;
-        }
+/* 前三名高亮特效 */
+.rank-table tr:nth-child(1) td {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  text-shadow: 0 0 10px #ffd700;
+}
+.rank-table tr:nth-child(2) td {
+  background: rgba(192, 192, 192, 0.2);
+  color: #c0c0c0;
+}
+.rank-table tr:nth-child(3) td {
+  background: rgba(205, 127, 50, 0.2);
+  color: #cd7f32;
+}
 
-        .config-item input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
+/* ========== 控制面板（观众不可见） ========== */
+#controlPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  height: 100vh;
+  background: #111;
+  padding: 20px;
+  border-left: 2px solid #00eeff;
+  overflow-y: auto;
+  display: none;
+  z-index: 999;
+}
 
-        .sort-actions {
-            display: flex;
-            gap: 0.8rem;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+.player {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #333;
+}
 
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #b9cad9;
-            padding: 0.6rem 1.2rem;
-            border-radius: 2rem;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #2c3e4e;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
+.score {
+  width: 80px;
+  padding: 6px;
+  background: #222;
+  border: 1px solid #00eeff;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+}
 
-        .btn-outline:hover {
-            background: #eef3fc;
-            border-color: #6c8fb0;
-            transform: translateY(-1px);
-        }
+.btns {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
-        .btn-primary {
-            background: #3b82f6;
-            border: none;
-            color: white;
-            padding: 0.6rem 1.4rem;
-            border-radius: 2rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
-        }
+.btn {
+  padding: 8px 16px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
 
-        .btn-primary:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-            box-shadow: 0 8px 18px rgba(59, 130, 246, 0.25);
-        }
+.btn:hover {
+  opacity: 0.8;
+}
 
-        .btn-danger {
-            background: #fee2e2;
-            color: #b91c1c;
-            border: 1px solid #fbc4c4;
-        }
-
-        .btn-danger:hover {
-            background: #ffd6d6;
-            border-color: #ef4444;
-            color: #991b1b;
-        }
-
-        /* 表单卡片 */
-        .form-card {
-            padding: 1.2rem 2rem 1.5rem;
-            margin-bottom: 2rem;
-            background: white;
-        }
-
-        .form-title {
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-            color: #1f2a3e;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .inline-form {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: flex-end;
-            gap: 1.2rem;
-        }
-
-        .field {
-            flex: 1;
-            min-width: 160px;
-        }
-
-        .field label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #5c6f87;
-            margin-bottom: 0.3rem;
-        }
-
-        .field input {
-            width: 100%;
-            padding: 0.7rem 1rem;
-            border-radius: 1.5rem;
-            border: 1px solid #d4dfea;
-            background: #fefefe;
-            transition: 0.2s;
-        }
-
-        .field input:focus {
-            border-color: #3b82f6;
-            outline: none;
-            background: white;
-        }
-
-        .form-buttons {
-            display: flex;
-            gap: 0.8rem;
-            align-items: center;
-        }
-
-        .badge-edit {
-            background: #eef2ff;
-            border-radius: 2rem;
-            padding: 0.3rem 1rem;
-            font-size: 0.75rem;
-            color: #1e40af;
-        }
-
-        /* 排行榜核心区 */
-        .rank-card {
-            padding: 0rem 0rem 1rem 0rem;
-            overflow-x: auto;
-        }
-
-        .rank-header {
-            padding: 1.2rem 1.5rem 0.5rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            flex-wrap: wrap;
-            border-bottom: 2px solid #eef2f8;
-        }
-
-        .stats {
-            display: flex;
-            gap: 1.5rem;
-            font-size: 0.85rem;
-            color: #4b5e77;
-            background: #f8fafd;
-            padding: 0.4rem 1rem;
-            border-radius: 2rem;
-        }
-
-        .stats span {
-            font-weight: 700;
-            color: #1e2a44;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th {
-            padding: 1.2rem 1rem 0.8rem 1rem;
-            font-weight: 700;
-            color: #2c3e50;
-            background: #fdfdfe;
-            border-bottom: 1px solid #e2edf2;
-            font-size: 0.9rem;
-        }
-
-        td {
-            padding: 1rem 1rem;
-            border-bottom: 1px solid #edf2f7;
-            vertical-align: middle;
-            font-size: 0.95rem;
-        }
-
-        .rank-number {
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: #4b6a8b;
-            width: 65px;
-        }
-
-        .item-name {
-            font-weight: 600;
-            color: #1e2f3f;
-        }
-
-        .item-score {
-            font-weight: 700;
-            font-family: monospace;
-            font-size: 1.1rem;
-            color: #0f3b5c;
-            min-width: 90px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 5px 8px;
-            border-radius: 2rem;
-            transition: all 0.15s;
-            opacity: 0.7;
-        }
-
-        .icon-btn:hover {
-            opacity: 1;
-            background: #eef3fa;
-            transform: scale(1.03);
-        }
-
-        .step-btn {
-            background: #f0f4f9;
-            border: 1px solid #cddae5;
-            border-radius: 2rem;
-            font-size: 0.85rem;
-            font-weight: 700;
-            padding: 0.25rem 0.8rem;
-            cursor: pointer;
-            transition: 0.1s;
-            color: #2c6280;
-        }
-
-        .step-btn:hover {
-            background: #e4ecf5;
-            border-color: #8aaec5;
-            transform: scale(0.97);
-        }
-
-        .empty-row td {
-            text-align: center;
-            padding: 3rem;
-            color: #8ba0b5;
-            font-style: italic;
-        }
-
-        @media (max-width: 780px) {
-            body {
-                padding: 1rem;
-            }
-            .settings-panel {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .config-group {
-                flex-direction: column;
-            }
-            .inline-form {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            th, td {
-                padding: 0.8rem 0.5rem;
-            }
-            .rank-number {
-                width: 45px;
-            }
-            .action-buttons {
-                gap: 4px;
-            }
-            .step-btn {
-                padding: 0.2rem 0.6rem;
-                font-size: 0.75rem;
-            }
-        }
-    </style>
+/* 显示/隐藏控制面板 */
+.showCtrl #controlPanel {
+  display: block;
+}
+</style>
 </head>
+
 <body>
-<div class="dashboard">
-    <!-- 自定义设置卡片 -->
-    <div class="card settings-panel">
-        <div class="config-group">
-            <div class="config-item">
-                <label>🏆 榜单标题</label>
-                <input type="text" id="rankTitleInput" placeholder="自定义标题" value="✨ 实时激斗排行榜">
-            </div>
-            <div class="config-item">
-                <label>📛 名称列名</label>
-                <input type="text" id="colNameInput" placeholder="选手 / 项目" value="挑战者">
-            </div>
-            <div class="config-item">
-                <label>⭐ 数值列名</label>
-                <input type="text" id="colScoreInput" placeholder="分数 / 成就值" value="战力指数">
-            </div>
-        </div>
-        <div class="sort-actions">
-            <button id="toggleSortBtn" class="btn-outline">🔽 降序 (高分在前)</button>
-            <button id="resetExampleBtn" class="btn-outline">📋 重置示例</button>
-            <button id="clearAllBtn" class="btn-outline btn-danger">🗑️ 清空榜单</button>
-        </div>
-    </div>
+<!-- 直播画面 -->
+<div class="box">
+  <h1 class="title">👑 鼠鼠赏金赛实时排行榜</h1>
+  <div id="result"></div>
+</div>
 
-    <!-- 添加 / 编辑条目卡片 -->
-    <div class="card form-card">
-        <div class="form-title">
-            <span>✏️ 管理榜单项目</span>
-            <span id="editModeBadge" class="badge-edit" style="display: none;">编辑模式</span>
-        </div>
-        <div class="inline-form">
-            <div class="field">
-                <label id="nameFieldLabel">挑战者</label>
-                <input type="text" id="itemNameInput" placeholder="例如：炎龙骑士" autocomplete="off">
-            </div>
-            <div class="field">
-                <label id="scoreFieldLabel">战力指数</label>
-                <input type="number" id="itemScoreInput" placeholder="分数 / 数值" step="1" value="100">
-            </div>
-            <div class="form-buttons">
-                <button id="saveItemBtn" class="btn-primary">➕ 添加 / 更新</button>
-                <button id="cancelEditBtn" class="btn-outline" style="display: none;">取消编辑</button>
-            </div>
-        </div>
-        <div style="font-size: 0.7rem; margin-top: 12px; color: #6e889b;">
-            💡 实时联动 · 点击每行旁的 <strong style="background:#eef2fa; padding:2px 8px; border-radius:20px;">+1 / -1</strong> 按钮，分值变化瞬间重新排名！总分平均值即时刷新。
-        </div>
-    </div>
-
-    <!-- 排行榜展示区 -->
-    <div class="card rank-card">
-        <div class="rank-header">
-            <h2 id="dynamicRankTitle" style="font-weight: 700; letter-spacing: -0.3px;">✨ 实时激斗排行榜</h2>
-            <div class="stats" id="statsPanel">
-                <span>📊 条目: <span id="totalCount">0</span></span>
-                <span>🏅 总分: <span id="totalScore">0</span></span>
-                <span>⚖️ 平均: <span id="avgScore">0</span></span>
-            </div>
-        </div>
-        <div style="overflow-x: auto;">
-            <table id="rankTable">
-                <thead id="tableHeader">
-                    <tr>
-                        <th># 排名</th>
-                        <th id="nameColHeader">挑战者</th>
-                        <th id="scoreColHeader">战力指数</th>
-                        <th style="min-width: 160px;">实时操控 · 微调排名</th>
-                    </tr>
-                </thead>
-                <tbody id="rankTableBody">
-                    <tr class="empty-row"><td colspan="4">✨ 暂无数据，点击上方添加你的第一个项目吧</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+<!-- 后台控制面板（默认隐藏） -->
+<div id="controlPanel">
+  <h3>后台控制面板</h3>
+  <div id="players" class="player-list"></div>
+  <div class="btns">
+    <button class="btn" onclick="reset()">清空重置</button>
+    <button class="btn" onclick="exportExcel()">导出Excel</button>
+  </div>
 </div>
 
 <script>
-    // ---------- 核心数据 ----------
-    let rankingItems = [];        // { id, name, score }
-    let editId = null;            // 编辑中的id
-    let sortDirection = 'desc';   // 'desc' 高分优先
+const users = [
+"瀚爱吃冰淇琳","牢","SUN","肸乯","波鲁鲁","今天中午吃啥呢",
+"小刘大王","东","吃点小鱼干","赖皮婵","Yee","望如日出",
+"妄想","愿望早点睡","我想意气风发","长期喝假酒6657","困男",
+"喝茶吗","552758","喝可乐","现实是头猪","小猫星期五",
+"癞蛤蟆想吃天鹅肉","你爷爷睡觉呢","Capricorn666","🌈🌈🌈Y.",
+"12un","五号球","徐绝对不虚"
+];
 
-    // ---------- DOM 元素 ----------
-    const rankTitleInput = document.getElementById('rankTitleInput');
-    const colNameInput = document.getElementById('colNameInput');
-    const colScoreInput = document.getElementById('colScoreInput');
-    const toggleSortBtn = document.getElementById('toggleSortBtn');
-    const resetExampleBtn = document.getElementById('resetExampleBtn');
-    const clearAllBtn = document.getElementById('clearAllBtn');
-    const itemNameInput = document.getElementById('itemNameInput');
-    const itemScoreInput = document.getElementById('itemScoreInput');
-    const saveItemBtn = document.getElementById('saveItemBtn');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    const editModeBadge = document.getElementById('editModeBadge');
-    const dynamicRankTitle = document.getElementById('dynamicRankTitle');
-    const nameColHeader = document.getElementById('nameColHeader');
-    const scoreColHeader = document.getElementById('scoreColHeader');
-    const rankTableBody = document.getElementById('rankTableBody');
-    const totalCountSpan = document.getElementById('totalCount');
-    const totalScoreSpan = document.getElementById('totalScore');
-    const avgScoreSpan = document.getElementById('avgScore');
-    const nameFieldLabel = document.getElementById('nameFieldLabel');
-    const scoreFieldLabel = document.getElementById('scoreFieldLabel');
+// 初始化后台面板
+function init() {
+  const wrap = document.getElementById("players");
+  users.forEach((u, i) => {
+    const item = document.createElement("div");
+    item.className = "player";
+    item.innerHTML = `<div>${u}</div><input type="number" class="score" id="s${i}" placeholder="分数" oninput="autoRank()">`;
+    wrap.appendChild(item);
+  });
+  autoRank();
+}
 
-    // ---------- 本地存储KEY ----------
-    const STORAGE_ITEMS = 'custom_rank_items';
-    const STORAGE_SETTINGS = 'custom_rank_settings';
-    const STORAGE_SORT = 'custom_rank_sortDir';
+// 自动实时更新排名（直播画面同步）
+function autoRank() {
+  const arr = [];
+  users.forEach((u, i) => {
+    const v = document.getElementById(`s${i}`)?.value || "0";
+    const num = parseInt(v) || 0;
+    arr.push({ name: u, score: num });
+  });
+  arr.sort((a, b) => b.score - a.score);
 
-    // 保存数据到localStorage
-    function saveItemsToLocal() {
-        localStorage.setItem(STORAGE_ITEMS, JSON.stringify(rankingItems));
-    }
+  let html = `<table class="rank-table"><tr><th>排名</th><th>抖音ID</th><th>积分</th></tr>`;
+  arr.forEach((it, i) => {
+    let rank = i + 1;
+    if (i === 0) rank = "👑 1";
+    html += `<tr><td>${rank}</td><td>${it.name}</td><td>${it.score}</td></tr>`;
+  });
+  html += `</table>`;
+  document.getElementById("result").innerHTML = html;
+}
 
-    function loadItemsFromLocal() {
-        const stored = localStorage.getItem(STORAGE_ITEMS);
-        if (stored) {
-            try {
-                rankingItems = JSON.parse(stored);
-                if (!rankingItems.every(item => item.hasOwnProperty('id'))) {
-                    rankingItems = rankingItems.map(item => ({ ...item, id: item.id || Date.now() + Math.random() + '' }));
-                    saveItemsToLocal();
-                }
-            } catch(e) { rankingItems = []; }
-        }
-        if (!rankingItems.length) {
-            // 默认趣味样例
-            rankingItems = [
-                { id: 'init1', name: '赤红 · 暴风使', score: 1240 },
-                { id: 'init2', name: '霜月 · 灵歌', score: 982 },
-                { id: 'init3', name: '雷霆主宰', score: 1453 },
-                { id: 'init4', name: '暗影星尘', score: 771 },
-                { id: 'init5', name: '翠羽守护者', score: 1105 },
-            ];
-            saveItemsToLocal();
-        }
-    }
+// 清空重置
+function reset() {
+  document.querySelectorAll(".score").forEach(i => i.value = "");
+  autoRank();
+}
 
-    function saveSettingsToLocal() {
-        const settings = {
-            rankTitle: rankTitleInput.value,
-            colName: colNameInput.value,
-            colScore: colScoreInput.value,
-        };
-        localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(settings));
-    }
+// 导出Excel
+function exportExcel() {
+  const arr = [];
+  users.forEach((u, i) => {
+    const v = document.getElementById(`s${i}`)?.value || "0";
+    arr.push({ name: u, score: parseInt(v) || 0 });
+  });
+  arr.sort((a, b) => b.score - a.score);
+  let csv = "排名,抖音ID,分数\n";
+  arr.forEach((it, i) => {
+    csv += `${i + 1},"${it.name}",${it.score}\n`;
+  });
+  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "鼠鼠赏金赛排行榜.csv";
+  a.click();
+}
 
-    function loadSettingsFromLocal() {
-        const stored = localStorage.getItem(STORAGE_SETTINGS);
-        if (stored) {
-            try {
-                const settings = JSON.parse(stored);
-                if (settings.rankTitle) rankTitleInput.value = settings.rankTitle;
-                if (settings.colName) colNameInput.value = settings.colName;
-                if (settings.colScore) colScoreInput.value = settings.colScore;
-            } catch(e) {}
-        }
-        const savedSort = localStorage.getItem(STORAGE_SORT);
-        if (savedSort === 'asc' || savedSort === 'desc') {
-            sortDirection = savedSort;
-        } else {
-            sortDirection = 'desc';
-        }
-        updateSortButtonText();
-    }
+// 快捷键：Ctrl + ` 显示/隐藏后台面板
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.key === "`") {
+    document.body.classList.toggle("showCtrl");
+  }
+});
 
-    function updateSortButtonText() {
-        if (sortDirection === 'desc') {
-            toggleSortBtn.innerHTML = '🔽 降序 (高分在前)';
-        } else {
-            toggleSortBtn.innerHTML = '🔼 升序 (低分在前)';
-        }
-    }
-
-    function saveSortDirection() {
-        localStorage.setItem(STORAGE_SORT, sortDirection);
-        updateSortButtonText();
-    }
-
-    // 重新排序获取渲染用数组 (不改变原数组顺序, 返回新排好的列表)
-    function getSortedItems() {
-        return [...rankingItems].sort((a, b) => {
-            if (sortDirection === 'desc') return b.score - a.score;
-            else return a.score - b.score;
-        });
-    }
-
-    // 渲染排行榜 + 绑定实时微调按钮 (核心: 点击 +/- 实时更新分数+排名)
-    function renderRanking() {
-        // 自定义列名
-        const customName = colNameInput.value.trim() || "名称";
-        const customScore = colScoreInput.value.trim() || "分数";
-        nameColHeader.innerText = customName;
-        scoreColHeader.innerText = customScore;
-        nameFieldLabel.innerText = customName;
-        scoreFieldLabel.innerText = customScore;
-
-        // 标题同步
-        const titleRaw = rankTitleInput.value.trim();
-        dynamicRankTitle.innerText = titleRaw || "自定义排行榜";
-
-        // 统计数据
-        const total = rankingItems.length;
-        const totalScore = rankingItems.reduce((sum, cur) => sum + (typeof cur.score === 'number' ? cur.score : 0), 0);
-        const avg = total === 0 ? 0 : (totalScore / total).toFixed(1);
-        totalCountSpan.innerText = total;
-        totalScoreSpan.innerText = totalScore.toLocaleString();
-        avgScoreSpan.innerText = avg;
-
-        if (total === 0) {
-            rankTableBody.innerHTML = `<tr class="empty-row"><td colspan="4">🏷️ 暂无数据，点击上方添加你的第一个项目吧</td></tr>`;
-            return;
-        }
-
-        const sorted = getSortedItems();
-        let html = '';
-        sorted.forEach((item, idx) => {
-            const rank = idx + 1;
-            const displayName = escapeHtml(item.name) || '未命名';
-            const displayScore = typeof item.score === 'number' ? item.score.toLocaleString() : item.score;
-            // 注意: 每个项目都带有微调按钮 +1 / -1 ，实现实时排名变化
-            html += `
-                <tr data-id="${item.id}">
-                    <td class="rank-number">${rank}</td>
-                    <td class="item-name">${displayName}</td>
-                    <td class="item-score">⭐ ${displayScore}</td>
-                    <td class="action-buttons">
-                        <button class="step-btn step-down" data-id="${item.id}" data-step="-1" title="减少1分，实时重排"> -1 </button>
-                        <button class="step-btn step-up" data-id="${item.id}" data-step="1" title="增加1分，实时重排"> +1 </button>
-                        <button class="icon-btn edit-item" data-id="${item.id}" title="编辑名称/数值">✏️</button>
-                        <button class="icon-btn delete-item" data-id="${item.id}" title="删除条目">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        });
-        rankTableBody.innerHTML = html;
-
-        // 绑定所有微调按钮 +1 / -1 事件 (实时改变分数并触发重绘排名)
-        document.querySelectorAll('.step-up').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.getAttribute('data-id');
-                modifyScoreById(id, 1);
-            });
-        });
-        document.querySelectorAll('.step-down').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.getAttribute('data-id');
-                modifyScoreById(id, -1);
-            });
-        });
-        // 编辑/删除事件
-        document.querySelectorAll('.edit-item').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = btn.getAttribute('data-id');
-                startEditById(id);
-            });
-        });
-        document.querySelectorAll('.delete-item').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = btn.getAttribute('data-id');
-                deleteItemById(id);
-            });
-        });
-    }
-
-    // 实时修改分数 : delta 变化量 (+1 / -1)
-    function modifyScoreById(id, delta) {
-        const item = rankingItems.find(i => i.id === id);
-        if (!item) return;
-        let newScore = item.score + delta;
-        // 允许负分场景（但不限制下限，不过为了美观，允许负分显示没有问题）
-        // 保留一位小数或者整数，但步进为整数，保持整数即可
-        newScore = Math.round(newScore * 10) / 10;
-        item.score = newScore;
-        // 保存到localStorage
-        saveItemsToLocal();
-        // 重新渲染表格（实时排名更新）
-        renderRanking();
-        // 如果当前正在编辑的项目刚好是这个id且编辑模式未关闭，需要同步表单数值（可选）
-        if (editId === id) {
-            itemScoreInput.value = item.score;
-        }
-    }
-
-    // 通过表单增、改项目
-    function addOrUpdateItem() {
-        let name = itemNameInput.value.trim();
-        let scoreRaw = itemScoreInput.value.trim();
-        const nameLabel = colNameInput.value.trim() || "名称";
-        if (name === "") {
-            alert(`❌ 请填写${nameLabel}`);
-            return;
-        }
-        let scoreNum = parseFloat(scoreRaw);
-        if (isNaN(scoreNum)) {
-            alert(`❌ 数值必须是有效数字，当前输入: ${scoreRaw}`);
-            return;
-        }
-        scoreNum = Math.round(scoreNum * 10) / 10;
-
-        if (editId !== null) {
-            const index = rankingItems.findIndex(item => item.id === editId);
-            if (index !== -1) {
-                rankingItems[index].name = name;
-                rankingItems[index].score = scoreNum;
-            }
-            resetEditMode();
-        } else {
-            const newId = Date.now() + '-' + Math.random().toString(36).substr(2, 6);
-            rankingItems.push({
-                id: newId,
-                name: name,
-                score: scoreNum,
-            });
-        }
-        saveItemsToLocal();
-        renderRanking();
-        clearFormInputs();   // 清空输入框 (仅新增后清空，编辑后已resetEditMode)
-    }
-
-    function startEditById(id) {
-        const targetItem = rankingItems.find(item => item.id === id);
-        if (!targetItem) return;
-        editId = id;
-        itemNameInput.value = targetItem.name;
-        itemScoreInput.value = targetItem.score;
-        saveItemBtn.innerText = '✏️ 更新项目';
-        cancelEditBtn.style.display = 'inline-flex';
-        editModeBadge.style.display = 'inline-block';
-        document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    function resetEditMode() {
-        editId = null;
-        saveItemBtn.innerText = '➕ 添加 / 更新';
-        cancelEditBtn.style.display = 'none';
-        editModeBadge.style.display = 'none';
-        clearFormInputs();
-    }
-
-    function clearFormInputs() {
-        if (editId === null) {
-            itemNameInput.value = '';
-            itemScoreInput.value = '100';
-        } else {
-            // 重置编辑模式后干净一点
-            itemNameInput.value = '';
-            itemScoreInput.value = '100';
-        }
-    }
-
-    function deleteItemById(id) {
-        const item = rankingItems.find(i => i.id === id);
-        if (!item) return;
-        if (confirm(`永久删除「${item.name}」，榜单实时刷新。确认吗？`)) {
-            rankingItems = rankingItems.filter(item => item.id !== id);
-            if (editId === id) resetEditMode();
-            saveItemsToLocal();
-            renderRanking();
-        }
-    }
-
-    function resetToExample() {
-        if (confirm("重置示例将覆盖当前所有数据，但会保留你的标题/列名设定，继续吗？")) {
-            rankingItems = [
-                { id: 'ex_a', name: '绯红魔导师', score: 1472 },
-                { id: 'ex_b', name: '霜巨人守护者', score: 823 },
-                { id: 'ex_c', name: '灵风斥候', score: 2005 },
-                { id: 'ex_d', name: '钢铁壁垒', score: 655 },
-                { id: 'ex_e', name: '月影舞者', score: 1198 },
-                { id: 'ex_f', name: '神谕贤者', score: 1777 },
-            ];
-            if (editId) resetEditMode();
-            saveItemsToLocal();
-            renderRanking();
-        }
-    }
-
-    function clearAllItems() {
-        if (confirm("⚠️ 彻底清空所有榜单项目，不可撤销。确定吗？")) {
-            rankingItems = [];
-            if (editId) resetEditMode();
-            saveItemsToLocal();
-            renderRanking();
-        }
-    }
-
-    function toggleSortDirection() {
-        sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
-        saveSortDirection();
-        renderRanking();  // 重新排序渲染
-    }
-
-    function bindSettingsWatchers() {
-        const updateFromSettings = () => {
-            saveSettingsToLocal();
-            renderRanking();
-        };
-        rankTitleInput.addEventListener('input', updateFromSettings);
-        colNameInput.addEventListener('input', updateFromSettings);
-        colScoreInput.addEventListener('input', updateFromSettings);
-    }
-
-    function bindFormActions() {
-        saveItemBtn.addEventListener('click', addOrUpdateItem);
-        cancelEditBtn.addEventListener('click', () => {
-            resetEditMode();
-            renderRanking();
-        });
-    }
-
-    function bindUtilityButtons() {
-        resetExampleBtn.addEventListener('click', resetToExample);
-        clearAllBtn.addEventListener('click', clearAllItems);
-        toggleSortBtn.addEventListener('click', toggleSortDirection);
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
-    function init() {
-        loadItemsFromLocal();
-        loadSettingsFromLocal();
-        bindSettingsWatchers();
-        bindFormActions();
-        bindUtilityButtons();
-        renderRanking();
-        if (!editId) {
-            itemNameInput.value = '';
-            itemScoreInput.value = '100';
-        }
-    }
-
-    init();
+window.onload = init;
 </script>
 </body>
 </html>
