@@ -131,14 +131,6 @@ body {
 .btn:hover {
   opacity: 0.8;
 }
-
-/* 保存状态提示 */
-.save-status {
-  margin-top: 15px;
-  color: #00eeff;
-  font-size: 14px;
-  text-align: center;
-}
 </style>
 </head>
 
@@ -151,14 +143,12 @@ body {
 
 <!-- 后台控制面板（默认显示） -->
 <div id="controlPanel">
-  <h3>后台控制面板（39人 · 自动保存）</h3>
+  <h3>后台控制面板（39人）</h3>
   <div id="players" class="player-list"></div>
   <div class="btns">
     <button class="btn" onclick="reset()">清空重置</button>
     <button class="btn" onclick="exportExcel()">导出Excel</button>
-    <button class="btn" style="background:#dc3545;" onclick="clearSavedData()">清除历史数据</button>
   </div>
-  <div class="save-status" id="saveStatus">✅ 数据自动保存中</div>
 </div>
 
 <script>
@@ -173,48 +163,16 @@ const users = [
 "😫","寄18弟","Edwad","aaa","小玲","林痕","蛋糕"
 ];
 
-// 本地存储key（用于标识本活动的数据）
-const STORAGE_KEY = "shushu_bounty_match_scores_2024";
-
-// 初始化后台面板 + 加载历史数据
+// 初始化后台面板
 function init() {
   const wrap = document.getElementById("players");
-  // 1. 先获取本地存储的历史分数
-  const savedScores = getSavedScores();
-  
-  // 2. 创建玩家分数输入框
   users.forEach((u, i) => {
     const item = document.createElement("div");
     item.className = "player";
-    // 加载历史分数（如果有的话）
-    const savedScore = savedScores[i] || "";
-    item.innerHTML = `<div>${u}</div><input type="number" class="score" id="s${i}" placeholder="分数" value="${savedScore}" oninput="handleScoreChange(${i})">`;
+    item.innerHTML = `<div>${u}</div><input type="number" class="score" id="s${i}" placeholder="分数" oninput="autoRank()">`;
     wrap.appendChild(item);
   });
-  
-  // 3. 初始化排名显示
   autoRank();
-  showSaveStatus("✅ 已加载历史数据");
-}
-
-// 处理分数变化（同步排名 + 保存数据）
-function handleScoreChange(index) {
-  const scoreInput = document.getElementById(`s${i}`);
-  const score = scoreInput.value || "0";
-  
-  // 1. 更新排名
-  autoRank();
-  
-  // 2. 保存到本地存储
-  saveScoresToLocal();
-  
-  // 3. 显示保存状态提示
-  showSaveStatus("✅ 数据已保存");
-  
-  // 4. 3秒后恢复默认提示
-  setTimeout(() => {
-    showSaveStatus("✅ 数据自动保存中");
-  }, 3000);
 }
 
 // 自动实时更新排名（直播画面同步）
@@ -237,56 +195,10 @@ function autoRank() {
   document.getElementById("result").innerHTML = html;
 }
 
-// 从本地存储获取历史分数
-function getSavedScores() {
-  try {
-    const savedData = localStorage.getItem(STORAGE_KEY);
-    return savedData ? JSON.parse(savedData) : [];
-  } catch (e) {
-    console.error("读取本地存储失败：", e);
-    return [];
-  }
-}
-
-// 保存当前分数到本地存储
-function saveScoresToLocal() {
-  try {
-    const currentScores = users.map((_, i) => {
-      return document.getElementById(`s${i}`)?.value || "";
-    });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentScores));
-  } catch (e) {
-    console.error("保存到本地存储失败：", e);
-    showSaveStatus("❌ 保存失败，请重试");
-  }
-}
-
-// 显示保存状态提示
-function showSaveStatus(message) {
-  const statusElement = document.getElementById("saveStatus");
-  statusElement.textContent = message;
-}
-
-// 清空重置（同时清除本地存储）
+// 清空重置
 function reset() {
-  if (confirm("确定要清空所有分数吗？此操作不可恢复！")) {
-    document.querySelectorAll(".score").forEach(i => i.value = "");
-    localStorage.removeItem(STORAGE_KEY);
-    autoRank();
-    showSaveStatus("✅ 已清空所有数据");
-  }
-}
-
-// 清除历史数据（单独功能）
-function clearSavedData() {
-  if (confirm("确定要清除所有历史保存数据吗？")) {
-    localStorage.removeItem(STORAGE_KEY);
-    showSaveStatus("✅ 历史数据已清除");
-    // 刷新页面加载空数据
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-  }
+  document.querySelectorAll(".score").forEach(i => i.value = "");
+  autoRank();
 }
 
 // 导出Excel
@@ -306,10 +218,8 @@ function exportExcel() {
   a.href = URL.createObjectURL(blob);
   a.download = "鼠鼠赏金赛（单三猛攻绝航）本周六排行榜.csv";
   a.click();
-  showSaveStatus("✅ 导出成功");
 }
 
-// 页面加载时初始化
 window.onload = init;
 </script>
 </body>
